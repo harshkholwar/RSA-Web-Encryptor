@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>💎 RSA Web Encryptor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #66d9ef;
+      --secondary: #1f1f2e;
+      --accent: #8be9fd;
+      --text: #f8f8f2;
+      --bg: #0b0c10;
+      --glow: 0 0 15px #66d9ef, 0 0 30px #66d9ef, 0 0 50px #66d9ef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      padding-bottom: 50px;
+    }
+    header {
+      background: #12121a;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 2px 10px #000;
+      border-bottom: 1px solid #222;
+    }
+    header h1 {
+      color: var(--accent);
+      font-size: 2.5rem;
+      text-shadow: var(--glow);
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      background: var(--secondary);
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+      animation: slideIn 0.5s ease-out;
+    }
+    h2 {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    textarea, pre {
+      width: 100%;
+      padding: 14px;
+      background: #2c2c3c;
+      border: none;
+      color: var(--text);
+      font-size: 1rem;
+      border-radius: 10px;
+      margin-top: 5px;
+      resize: vertical;
+    }
+    .btn {
+      background: var(--primary);
+      color: #0b0c10;
+      font-weight: bold;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 10px;
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+      box-shadow: 0 0 15px var(--primary);
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: var(--glow);
+    }
+    .section { margin-bottom: 30px; }
+    .flex { display: flex; gap: 20px; flex-wrap: wrap; }
+    .half { flex: 1 1 48%; }
+    .qr-card {
+      background: #181828;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      text-align: center;
+      margin-top: 20px;
+    }
+    #qrcode {
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: inline-block;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 768px) {
+      .flex { flex-direction: column; }
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>🔐 RSA Web Encryptor</h1></header>
+  <div class="container">
+    <div class="section">
+      <button class="btn" onclick="generateKeys()">🚀 Generate RSA Keys</button>
+    </div>
+    <div class="flex">
+      <div class="half">
+        <h2>📤 Public Key</h2>
+        <pre id="pubKey">Click "Generate" to get keys.</pre>
+      </div>
+      <div class="half">
+        <h2>🔐 Private Key</h2>
+        <pre id="privKey">Click "Generate" to get keys.</pre>
+      </div>
+    </div>
+    <div class="section">
+      <h2>✉️ Message</h2>
+      <textarea id="input" placeholder="Type a secret message..."></textarea>
+      <button class="btn" onclick="encrypt()">🔒 Encrypt</button>
+    </div>
+    <div class="section">
+      <h2>🧱 Encrypted Message</h2>
+      <textarea id="encrypted" placeholder="Encrypted text will appear here..."></textarea>
+      <button class="btn" onclick="decrypt()">🔓 Decrypt</button>
+    </div>
+    <div class="section">
+      <h2>📜 Decrypted Message</h2>
+      <textarea id="decrypted" placeholder="Decrypted output..."></textarea>
+    </div>
+    <div class="qr-card">
+      <h2>📱 Public Key QR Code</h2>
+      <p>Scan this to open a new window with the public key</p>
+      <div id="qrcode"></div>
+    </div>
+  </div>
+  <footer>💎 Built with HTML, CSS, JavaScript & Crypto Magic.</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+    let e, d, n;
+    function isPrime(num) {
+      for (let i = 2, s = Math.sqrt(num); i <= s; i++)
+        if (num % i === 0) return false;
+      return num > 1;
+    }
+    function gcd(a, b) {
+      while (b !== 0) [a, b] = [b, a % b];
+      return a;
+    }
+    function modInverse(e, phi) {
+      let m0 = phi, t, q;
+      let x0 = 0, x1 = 1;
+      while (e > 1) {
+        q = Math.floor(e / phi);
+        t = phi; phi = e % phi; e = t;
+        t = x0; x0 = x1 - q * x0; x1 = t;
+      }
+      return (x1 + m0) % m0;
+    }
+    function generateKeys() {
+      const primes = [];
+      for (let i = 100; i < 300; i++) if (isPrime(i)) primes.push(i);
+      const p = primes[Math.floor(Math.random() * primes.length)];
+      const q = primes[Math.floor(Math.random() * primes.length)];
+      n = p * q;
+      const phi = (p - 1) * (q - 1);
+      e = 65537;
+      while (gcd(e, phi) !== 1) e += 2;
+      d = modInverse(e, phi);
+      document.getElementById("pubKey").textContent = `e = ${e}\nn = ${n}`;
+      document.getElementById("privKey").textContent = `d = ${d}\nn = ${n}`;
+      document.getElementById("qrcode").innerHTML = "";
+      const qrURL = window.location.origin + "/qr.html?e=" + e + "&n=" + n;
+      new QRCode(document.getElementById("qrcode"), {
+        text: qrURL,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+    function encrypt() {
+      const msg = document.getElementById("input").value;
+      if (!e || !n) return alert("Generate keys first.");
+      const encrypted = Array.from(msg).map(ch => {
+        const code = ch.charCodeAt(0);
+        return BigInt(code) ** BigInt(e) % BigInt(n);
+      });
+      document.getElementById("encrypted").value = encrypted.join(" ");
+    }
+    function decrypt() {
+      const enc = document.getElementById("encrypted").value.split(" ").map(BigInt);
+      if (!d || !n) return alert("Generate keys first.");
+      const decrypted = enc.map(num => String.fromCharCode(Number(num ** BigInt(d) % BigInt(n))));
+      document.getElementById("decrypted").value = decrypted.join("");
+    }
+  </script>
+</body>
+</html>

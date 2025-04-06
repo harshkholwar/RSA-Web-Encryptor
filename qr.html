@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Public Key Viewer</title>
+  <style>
+    body {
+      background: #0b0c10;
+      color: #66d9ef;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    pre {
+      background: #1f1f2e;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔓 Public RSA Key</h1>
+  <pre id="keyDisplay">Loading...</pre>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const e = params.get('e');
+    const n = params.get('n');
+    document.getElementById('keyDisplay').textContent = `e = ${e}\nn = ${n}`;
+  </script>
+</body>
+</html>
